@@ -2,6 +2,8 @@
 
 Póker Texas Hold'em multijugador para jugar con amigos, cada uno desde su celular o compu, sin instalar nada. Salas con código, fichas, chat y tiempo por turno.
 
+**Jugar:** https://poker-texas-eight.vercel.app
+
 ## Cómo funciona
 
 No tiene un servidor prendido todo el tiempo:

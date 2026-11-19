@@ -61,16 +61,19 @@
     <header class="topbar">
       <div class="room-info">
         Sala <b id="roomCode">----</b>
-        <button id="shareBtn" class="btn small" title="Copiar enlace de invitación">🔗 Invitar</button>
       </div>
       <div class="top-actions">
-        <button id="hostBtn" class="btn small hidden">⚙️ Anfitrión</button>
-        <button id="rankBtn" class="btn small" title="Ranking de la sala">📊</button>
-        <button id="soundBtn" class="btn small" title="Sonido">🔊</button>
-        <button id="rulesBtn" class="btn small" title="Cómo se juega">📖</button>
-        <button id="optionsBtn" class="btn small">🂠 Cartas</button>
         <button id="chatToggle" class="btn small chat-toggle">💬 <span id="unread" class="badge hidden">0</span></button>
-        <button id="leaveBtn" class="btn small danger">Salir</button>
+        <button id="menuBtn" class="btn small menu-btn" aria-label="Menú" aria-expanded="false">☰</button>
+        <nav id="topMenu" class="top-menu">
+          <button id="shareBtn" class="btn small" title="Copiar enlace de invitación">🔗 <span class="lbl-always">Invitar</span></button>
+          <button id="hostBtn" class="btn small hidden">⚙️ <span class="lbl-always">Anfitrión</span></button>
+          <button id="rankBtn" class="btn small" title="Ranking de la sala">📊<span class="lbl"> Ranking</span></button>
+          <button id="soundBtn" class="btn small" title="Sonido"><span id="soundIco">🔊</span><span class="lbl"> Sonido</span></button>
+          <button id="rulesBtn" class="btn small" title="Cómo se juega">📖<span class="lbl"> Cómo se juega</span></button>
+          <button id="optionsBtn" class="btn small">🂠 <span class="lbl-always">Cartas</span></button>
+          <button id="leaveBtn" class="btn small danger">Salir</button>
+        </nav>
       </div>
     </header>
 

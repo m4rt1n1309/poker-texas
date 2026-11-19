@@ -210,6 +210,15 @@
   }
 
   // ---------- barra superior ----------
+  // en pantallas chicas los botones van en un menú ☰ para que la mesa y las apuestas entren sin scrollear
+  const setMenu = (open) => {
+    $('topMenu').classList.toggle('open', open);
+    $('menuBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  $('menuBtn').onclick = (e) => { e.stopPropagation(); setMenu(!$('topMenu').classList.contains('open')); };
+  $('topMenu').addEventListener('click', (e) => { if (e.target.closest('button') && e.target.closest('button').id !== 'soundBtn') setMenu(false); });
+  document.addEventListener('click', (e) => { if (!e.target.closest('#topMenu')) setMenu(false); });
+
   $('shareBtn').onclick = async () => {
     const url = `${location.origin}/?sala=${currentRoom}`;
     if (navigator.share) {
@@ -482,7 +491,7 @@
       }
     },
   };
-  const updateSoundBtn = () => { $('soundBtn').textContent = sound.on ? '🔊' : '🔇'; };
+  const updateSoundBtn = () => { $('soundIco').textContent = sound.on ? '🔊' : '🔇'; };
   updateSoundBtn();
   $('soundBtn').onclick = () => {
     sound.on = !sound.on;

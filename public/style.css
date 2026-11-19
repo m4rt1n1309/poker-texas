@@ -79,7 +79,26 @@ label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 12p
   flex-wrap: wrap;
 }
 .room-info b { color: var(--gold); letter-spacing: 3px; font-size: 18px; margin-right: 6px; }
-.top-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.top-actions { display: flex; gap: 6px; flex-wrap: wrap; position: relative; }
+.top-menu { display: flex; gap: 6px; flex-wrap: wrap; }
+.menu-btn { display: none; font-size: 18px; line-height: 1; }
+.top-menu .lbl { display: none; }
+
+/* pantallas chicas: barra de una sola línea y el resto en un menú ☰ */
+@media (max-width: 900px) {
+  .topbar { flex-wrap: nowrap; padding: 6px 10px; }
+  .top-actions { flex-wrap: nowrap; }
+  .menu-btn { display: inline-block; }
+  .top-menu {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+    flex-direction: column; flex-wrap: nowrap; gap: 4px; min-width: 200px; padding: 8px;
+    background: #0d2b1f; border: 1px solid #2d5a46; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.6);
+  }
+  .top-menu.open { display: flex; }
+  .top-menu .btn.small { text-align: left; padding: 10px 12px; font-size: 15px; }
+  .top-menu .lbl { display: inline; }
+}
 .badge { background: var(--red); border-radius: 9px; padding: 0 6px; font-size: 12px; }
 
 .main { flex: 1; display: flex; min-height: 0; }
@@ -217,7 +236,7 @@ label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 12p
 
 /* celular en vertical: mesa más alta */
 @media (max-aspect-ratio: 1/1) {
-  .table { aspect-ratio: 3 / 4; max-height: calc(100dvh - 270px); }
+  .table { aspect-ratio: 3 / 4; max-height: calc(100dvh - 255px); }
   .felt { inset: 15% 12% 10%; }
   .btn.small { white-space: nowrap; }
   :root { --cw-board: clamp(26px, 8.6vw, 56px); --cw-seat: clamp(22px, 6.5vw, 40px); --cw-me: clamp(34px, 10vw, 56px); }

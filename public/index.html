@@ -12,7 +12,8 @@
   <section id="lobby" class="screen">
     <div class="lobby-card">
       <h1><span class="suit-red">♥</span> Póker con Amigos <span>♠</span></h1>
-      <p class="sub">Texas Hold'em · juega desde cualquier compu o celular</p>
+      <p class="sub">Texas Hold'em · de 2 a 9 jugadores, desde cualquier compu o celular</p>
+      <p class="sub"><button id="rulesLobbyBtn" class="btn small">📖 Cómo se juega</button></p>
 
       <label>Tu nombre
         <input id="nameInput" maxlength="16" placeholder="Ej: Martín" autocomplete="nickname">
@@ -66,6 +67,7 @@
         <button id="hostBtn" class="btn small hidden">⚙️ Anfitrión</button>
         <button id="rankBtn" class="btn small" title="Ranking de la sala">📊</button>
         <button id="soundBtn" class="btn small" title="Sonido">🔊</button>
+        <button id="rulesBtn" class="btn small" title="Cómo se juega">📖</button>
         <button id="optionsBtn" class="btn small">🂠 Cartas</button>
         <button id="chatToggle" class="btn small chat-toggle">💬 <span id="unread" class="badge hidden">0</span></button>
         <button id="leaveBtn" class="btn small danger">Salir</button>
@@ -126,6 +128,7 @@
   <div id="toast" class="toast hidden"></div>
 
   <script src="/poker.js"></script>
+  <script src="rules.js"></script>
   <script src="client.js"></script>
 </body>
 </html>

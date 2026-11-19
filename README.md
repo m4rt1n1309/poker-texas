@@ -26,6 +26,8 @@ Desde ahí, cada push a `main` se publica solo.
 
 ## Cómo se juega
 
+De **2 a 9 jugadores** por mesa (personas y bots). El reglamento completo, con todas las manos y cartas de ejemplo, está en el juego: botón **📖 Cómo se juega** (en el inicio y en la mesa).
+
 1. Uno escribe su nombre y toca **Crear sala** (elige fichas iniciales, ciegas y tiempo por turno).
 2. Comparte el código de 4 letras o el botón **🔗 Invitar**.
 3. Los demás entran con el código. Con 2 o más, el anfitrión toca **▶ Empezar a jugar**.
@@ -78,6 +80,6 @@ Con `npm run dev` también se puede jugar en la misma red WiFi: la consola muest
 - `lib/bots.js`: cómo piensan y mienten los bots.
 - `lib/store.js`: guarda las salas en Upstash Redis (o en memoria en la compu).
 - `public/poker.js`: mazo y evaluador de manos (lo usan la función y la página).
-- `public/`: la página (`index.html`, `client.js`, `style.css`).
+- `public/`: la página (`index.html`, `client.js`, `style.css`) y el reglamento (`rules.js`).
 - `public/deck/`: mazo clásico *SVG-cards* (David Bellot y otros, licencia LGPL 2.1, ver `public/deck/LICENSE`).
 - `dev-server.js`: servidor para probar en la compu (Vercel no lo usa).

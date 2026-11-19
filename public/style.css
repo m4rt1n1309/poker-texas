@@ -289,3 +289,20 @@ table.ranking td { padding: 7px 6px; border-bottom: 1px solid #1f4a37; white-spa
 table.ranking tr.you td { background: rgba(232,185,49,.1); }
 table.ranking td.pos { color: #6fff9e; font-weight: 700; }
 table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
+
+/* ---------- reglamento ---------- */
+.modal-box.wide { max-width: 640px; }
+.rules h4 { margin: 18px 0 6px; color: var(--gold); }
+.rules ul { margin: 0; padding-left: 20px; }
+.rules li { margin: 0 0 6px; line-height: 1.4; }
+.rule-hand { display: grid; grid-template-columns: 150px auto; grid-template-rows: auto auto; gap: 2px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #1f4a37; }
+.rule-hand .rh-title { grid-row: 1 / span 2; }
+.rule-hand .rh-n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #2b4a3c; font-size: 12px; margin-right: 4px; }
+.rule-hand .rh-cards { display: flex; gap: 3px; --cw: 44px; }
+.rule-hand .rh-cards .card { animation: none; }
+.rule-hand .rh-desc { font-size: 13px; color: var(--muted); }
+@media (max-width: 520px) {
+  .rule-hand { grid-template-columns: 1fr; }
+  .rule-hand .rh-title { grid-row: auto; }
+  .rule-hand .rh-cards { --cw: 34px; }
+}

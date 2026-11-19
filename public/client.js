@@ -72,7 +72,10 @@
     build(body);
     $('modal').classList.remove('hidden');
   }
-  function closeModal() { $('modal').classList.add('hidden'); }
+  function closeModal() {
+    $('modal').classList.add('hidden');
+    $('modal').querySelector('.modal-box').classList.remove('wide');
+  }
   $('modalClose').onclick = closeModal;
   $('modal').onclick = (e) => { if (e.target === $('modal')) closeModal(); };
 
@@ -248,6 +251,12 @@
   });
 
   $('hostBtn').onclick = () => openModal(buildHostPanel);
+  const showRules = () => {
+    openModal((b) => window.buildRules(b, cardEl));
+    $('modal').querySelector('.modal-box').classList.add('wide');
+  };
+  $('rulesBtn').onclick = showRules;
+  $('rulesLobbyBtn').onclick = showRules;
 
   $('rankBtn').onclick = () => openModal((b) => {
     const list = (state && state.ranking) || [];

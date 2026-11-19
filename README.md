@@ -12,7 +12,7 @@ No tiene un servidor prendido todo el tiempo:
 - **Upstash Redis** (plan gratis) guarda cada sala. Las cartas se reparten y se guardan ahí, y la función le manda a cada jugador **solo sus cartas**: nadie puede espiar las de los demás, ni siquiera el anfitrión.
 - Cada celular consulta la sala una vez por segundo (cada 4 s si la pestaña está en segundo plano). En cada consulta se aplica lo que tenía que pasar: turnos vencidos, cartas de un all-in, mano siguiente.
 - Si dos jugadores mandan algo al mismo tiempo, la sala tiene un número de versión y la jugada que llega segunda se reintenta: no se pisan.
-- Las salas sin movimiento se borran solas a las 24 horas.
+- Las salas sin movimiento se borran solas a los 7 días (con su ranking).
 
 ## Publicar en Vercel (una sola vez)
 
@@ -33,7 +33,10 @@ Desde ahí, cada push a `main` se publica solo.
 - **🤖 Practicar contra bots:** desde el inicio, arma una mesa con 3 bots (fácil, normal y difícil) y empieza sola.
 - **⚙️ Anfitrión:** pausar, cambiar ciegas y tiempo, agregar bots, dar o quitar fichas, sacar jugadores.
 - **🂠 Cartas:** cada jugador elige cartas *dibujadas* o *clásicas* (con figuras).
-- **💬 Chat** en la sala.
+- **💬 Chat** en la sala. Los bots contestan si los nombras o los acusas de mentir.
+- **📊 Ranking** de la sala: ganancia de cada uno, manos ganadas, mayor bote y mejor jugada.
+- **🔊 Sonidos y animaciones:** fichas que vuelan al bote y al ganador, globito con cada jugada, cartas que se dan vuelta. El botón 🔊 los silencia.
+- **Velocidad de los bots** (panel del anfitrión): lenta, normal o rápida. Mientras deciden se ve "🤔 pensando…".
 - Si se acaba el tiempo, el jugador pasa (si puede) o se retira. A quien está desconectado se le dan solo 5 segundos.
 - Si alguien cierra la página o se queda sin internet, al volver a abrirla vuelve a su asiento con sus fichas.
 - Atajos en la compu: `F` retirarse, `C` o espacio pasar/igualar, `R` subir.

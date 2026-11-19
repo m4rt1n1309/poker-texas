@@ -144,3 +144,62 @@ test('si la única persona se va, la sala queda vacía aunque haya bots', () => 
   game.apply(room, 'humano-0001', 'leave', {}, 0);
   assert(game.isEmpty(room));
 });
+
+test('ranking: la suma de ganancias y pérdidas da cero, aunque alguien se vaya o reciba fichas', () => {
+  let now = 0;
+  let room = game.createRoom('RANK', 'humano-0001', 'Ana', { startChips: 1000, bigBlind: 20, botSpeed: 'rapida' }, now);
+  game.apply(room, 'humano-0002', 'join', { name: 'Beto' }, now);
+  game.apply(room, 'humano-0001', 'addBot', { level: 'dificil' }, now);
+  game.apply(room, 'humano-0001', 'chips', { seat: 1, amount: 500 }, now); // el anfitrión le da 500 a Beto
+  game.apply(room, 'humano-0001', 'start', {}, now);
+  for (let step = 0; step < 400 && room.handNo < 12 && room.running; step++) {
+    now += 1000;
+    room = roundtrip(room);
+    game.tick(room, now);
+    for (const t of ['humano-0001', 'humano-0002']) {
+      game.touch(room, t, now);
+      const st = game.stateFor(room, t, now);
+      if (st.actions) game.apply(room, t, 'action', { type: st.actions.canCheck ? 'check' : 'call' }, now);
+    }
+    if (room.handNo === 6 && !room.seats.some((p) => p && p.token === 'humano-0002' && p.leaving)) {
+      game.apply(room, 'humano-0002', 'leave', {}, now); // Beto se va a mitad de la partida
+    }
+  }
+  const ranking = game.stateFor(room, 'humano-0001', now).ranking;
+  assert.strictEqual(ranking.length, 3);
+  assert.strictEqual(ranking.reduce((a, r) => a + r.net, 0), 0, JSON.stringify(ranking));
+  assert(ranking.some((r) => r.name === 'Beto' && !r.here), 'Beto sigue en el ranking aunque se fue');
+  assert(ranking.reduce((a, r) => a + r.handsWon, 0) >= room.handNo - 1);
+  assert(ranking[0].net >= ranking[2].net, 'ordenado de mayor a menor');
+});
+
+test('los bots contestan en el chat (un rato después) si los nombran o los acusan de mentir', () => {
+  let now = 0;
+  const room = game.createRoom('CHAT', 'humano-0001', 'Ana', {}, now);
+  game.apply(room, 'humano-0001', 'addBot', { level: 'normal' }, now);
+  const bot = room.seats.find((p) => p && p.bot);
+  const bare = bot.name.replace('🤖', '').trim();
+  let replies = 0;
+  for (let i = 0; i < 20; i++) {
+    const before = room.chat.length;
+    game.apply(room, 'humano-0001', 'chat', { text: i % 2 ? `che ${bare.toLowerCase()}, ¿qué tenés?` : 'sos un mentiroso' }, now);
+    assert.strictEqual(room.chat.length, before + 1, 'no contesta al instante');
+    now += 4000;
+    game.tick(room, now);
+    replies += room.chat.slice(before + 1).filter((m) => m.from === bot.name).length;
+  }
+  assert(replies >= 10, `contestó ${replies} de 20`);
+});
+
+test('velocidad de los bots: lenta tarda más que rápida', () => {
+  const thinkTime = (speed) => {
+    const room = game.createRoom('VELO', 'humano-0001', 'Ana', { botSpeed: speed }, 0);
+    game.apply(room, 'humano-0001', 'addBot', {}, 0);
+    game.apply(room, 'humano-0001', 'start', {}, 0);
+    if (room.seats[room.hand.toAct].bot) return room.hand.botAt;
+    game.apply(room, 'humano-0001', 'action', { type: 'call' }, 0);
+    return room.hand.botAt;
+  };
+  assert(thinkTime('lenta') >= 3500 && thinkTime('rapida') <= 1500);
+  assert.strictEqual(game.stateFor(game.createRoom('X', 'humano-0001', 'A', { botSpeed: 'cualquiera' }, 0), 'humano-0001', 0).settings.botSpeed, 'normal');
+});

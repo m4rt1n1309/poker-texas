@@ -249,6 +249,28 @@
 
   $('hostBtn').onclick = () => openModal(buildHostPanel);
 
+  $('rankBtn').onclick = () => openModal((b) => {
+    const list = (state && state.ranking) || [];
+    b.append(h('h3', { textContent: '📊 Ranking de la sala' }));
+    if (!list.length) { b.append(h('p', { textContent: 'Todavía no hay datos.' })); return; }
+    const medals = ['🥇', '🥈', '🥉'];
+    const table = h('table', { className: 'ranking' });
+    table.append(h('tr', {}, ...['', 'Jugador', 'Ganancia', 'Manos', 'Mayor bote', 'Mejor jugada'].map((t) => h('th', { textContent: t }))));
+    list.forEach((r, i) => {
+      const net = h('td', { className: r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : '', textContent: (r.net > 0 ? '+' : '') + fmt(r.net) });
+      const tr = h('tr', { className: r.isYou ? 'you' : '' },
+        h('td', { textContent: medals[i] || `${i + 1}` }),
+        h('td', { textContent: r.name + (r.here ? '' : ' (se fue)') }),
+        net,
+        h('td', { textContent: `${r.handsWon}/${r.played}` }),
+        h('td', { textContent: r.biggestPot ? fmt(r.biggestPot) : '—' }),
+        h('td', { textContent: r.best || '—' }));
+      table.append(tr);
+    });
+    b.append(h('div', { className: 'ranking-wrap' }, table),
+      h('p', { className: 'sys', textContent: 'Ganancia = fichas que tiene ahora menos las que recibió (al entrar o de regalo del anfitrión). "Manos" = ganadas / jugadas. El ranking dura lo que dure la sala: se borra después de 7 días sin jugar.' }));
+  });
+
   function buildHostPanel(b) {
     if (!state) return;
     const s = state.settings;
@@ -268,14 +290,19 @@
       tt.append(h('option', { value: v, textContent: t, selected: v === s.turnTime }));
     }
     const sc = h('input', { type: 'number', value: s.startChips, min: 10 });
+    const sp = h('select');
+    for (const [v, t] of [['lenta', 'Lenta (4-5 s)'], ['normal', 'Normal (2-3 s)'], ['rapida', 'Rápida (1 s)']]) {
+      sp.append(h('option', { value: v, textContent: t, selected: v === (s.botSpeed || 'normal') }));
+    }
     b.append(
       h('label', {}, 'Ciega grande (la chica es la mitad)', bb),
       h('label', {}, 'Tiempo por turno', tt),
       h('label', {}, 'Fichas iniciales para nuevos jugadores', sc),
+      h('label', {}, 'Velocidad de los bots', sp),
     );
     const save = h('button', { className: 'btn primary', textContent: 'Guardar reglas' });
     save.onclick = () => {
-      send('settings', { bigBlind: bb.value, turnTime: tt.value, startChips: sc.value });
+      send('settings', { bigBlind: bb.value, turnTime: tt.value, startChips: sc.value, botSpeed: sp.value });
       toast('Reglas guardadas');
     };
     b.append(save);
@@ -332,6 +359,7 @@
       if (m.id <= lastChatId) continue;
       lastChatId = m.id;
       addMsg(m);
+      if (!first && !m.system && state && m.from !== (state.seats[state.yourSeat] || {}).name) sound.play('msg');
       if (!first && !m.system && !$('chat').classList.contains('open') && getComputedStyle($('chatToggle')).display !== 'none') {
         unread++;
         $('unread').textContent = unread;
@@ -396,16 +424,132 @@
     if (e.key === 'r') $('raiseBtn').click();
   });
 
+  // ---------- sonidos (se generan en el momento, no hay archivos de audio) ----------
+  const sound = {
+    on: store.get('poker_sound', '1') === '1',
+    ctx: null,
+    ac() {
+      try {
+        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+      } catch { return null; }
+      return this.ctx;
+    },
+    tone(c, freq, dur, { type = 'sine', vol = 0.07, delay = 0, to = null } = {}) {
+      const t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    },
+    noise(c, dur, { vol = 0.06, delay = 0, freq = 2000 } = {}) {
+      const t = c.currentTime + delay;
+      const buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; g.gain.value = vol;
+      src.connect(f); f.connect(g); g.connect(c.destination);
+      src.start(t);
+    },
+    play(name) {
+      if (!this.on) return;
+      const c = this.ac();
+      if (!c) return;
+      const chip = (delay) => { this.tone(c, 2200 + Math.random() * 600, 0.05, { type: 'triangle', vol: 0.05, delay }); this.noise(c, 0.04, { vol: 0.04, delay, freq: 5000 }); };
+      switch (name) {
+        case 'chip': chip(0); chip(0.06); break;
+        case 'chips': for (let i = 0; i < 5; i++) chip(i * 0.05); break;
+        case 'check': this.tone(c, 160, 0.07, { type: 'square', vol: 0.05 }); this.tone(c, 150, 0.07, { type: 'square', vol: 0.05, delay: 0.12 }); break;
+        case 'fold': this.noise(c, 0.22, { vol: 0.07, freq: 900 }); break;
+        case 'deal': this.noise(c, 0.07, { vol: 0.06, freq: 3500 }); break;
+        case 'allin': this.tone(c, 220, 0.45, { type: 'sawtooth', vol: 0.04, to: 880 }); for (let i = 0; i < 6; i++) chip(0.3 + i * 0.04); break;
+        case 'win': [523, 659, 784, 1047].forEach((f, i) => this.tone(c, f, 0.25, { type: 'triangle', vol: 0.07, delay: i * 0.1 })); break;
+        case 'turn': this.tone(c, 880, 0.12, { vol: 0.08 }); this.tone(c, 1175, 0.16, { vol: 0.08, delay: 0.13 }); break;
+        case 'msg': this.tone(c, 1320, 0.06, { vol: 0.03 }); break;
+      }
+    },
+  };
+  const updateSoundBtn = () => { $('soundBtn').textContent = sound.on ? '🔊' : '🔇'; };
+  updateSoundBtn();
+  $('soundBtn').onclick = () => {
+    sound.on = !sound.on;
+    store.set('poker_sound', sound.on ? '1' : '0');
+    updateSoundBtn();
+    if (sound.on) sound.play('chip');
+  };
+
   // aviso cuando es tu turno
   function beep() {
-    try {
-      const ctx = beep.ctx || (beep.ctx = new (window.AudioContext || window.webkitAudioContext)());
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.value = 880; g.gain.value = 0.08;
-      o.connect(g); g.connect(ctx.destination);
-      o.start(); o.stop(ctx.currentTime + 0.15);
-    } catch {}
+    sound.play('turn');
     if (navigator.vibrate) navigator.vibrate(150);
+  }
+
+  // ---------- animaciones: qué cambió desde la última vez ----------
+  const bubbles = {}; // asiento -> { text, kind, until, fresh }
+  const actionKeys = {};
+  const kindOf = (a) => /All-in/.test(a) ? 'allin' : /Sube|Apuesta/.test(a) ? 'raise' : /Iguala|Ciega/.test(a) ? 'call' : /Pasa/.test(a) ? 'check' : /retira/.test(a) ? 'fold' : 'call';
+
+  function detectEvents(prev, s) {
+    const ev = [];
+    if (!prev || prev.code !== s.code) {
+      s.seats.forEach((p) => { if (p) actionKeys[p.seat] = `${s.handNo}|${s.stage}|${p.lastAction}|${p.bet}`; });
+      return ev;
+    }
+    if (s.handNo !== prev.handNo && s.stage !== 'waiting') ev.push({ type: 'sound', name: 'deal' });
+    if (s.board.length > prev.board.length && s.handNo === prev.handNo) ev.push({ type: 'sound', name: 'deal' });
+    s.seats.forEach((p) => {
+      if (!p) return;
+      const key = `${s.handNo}|${s.stage}|${p.lastAction}|${p.bet}`;
+      const old = actionKeys[p.seat];
+      actionKeys[p.seat] = key;
+      if (!p.lastAction || key === old) return;
+      const kind = kindOf(p.lastAction);
+      bubbles[p.seat] = { text: p.lastAction, kind, until: Date.now() + 2800, fresh: true };
+      ev.push({ type: 'sound', name: kind === 'raise' ? 'chips' : kind });
+      const before = prev.seats[p.seat];
+      if (before && s.handNo === prev.handNo && p.bet > before.bet) ev.push({ type: 'bet', seat: p.seat });
+    });
+    if (s.stage === 'showdown' && s.results && !(prev.stage === 'showdown' && prev.handNo === s.handNo)) {
+      ev.push({ type: 'sound', name: 'win' });
+      s.seats.forEach((p) => { if (p && p.won) ev.push({ type: 'win', seat: p.seat }); });
+    }
+    return ev;
+  }
+
+  // fichas que vuelan entre dos puntos de la mesa (en % del tamaño de la mesa)
+  function flyChips(from, to, n) {
+    const table = $('table');
+    for (let i = 0; i < n; i++) {
+      const c = h('div', { className: 'chip-fly' });
+      c.style.left = from.x + (Math.random() * 3 - 1.5) + '%';
+      c.style.top = from.y + (Math.random() * 3 - 1.5) + '%';
+      c.style.transitionDelay = i * 70 + 'ms';
+      table.append(c);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        c.style.left = to.x + '%';
+        c.style.top = to.y + '%';
+      }));
+      setTimeout(() => c.classList.add('gone'), 700 + i * 70);
+      setTimeout(() => c.remove(), 1100 + i * 70);
+    }
+  }
+  function potPoint() {
+    const t = $('table').getBoundingClientRect(), r = $('pot').getBoundingClientRect();
+    if (!t.width || !r.width) return { x: 50, y: 40 };
+    return { x: ((r.left + r.width / 2 - t.left) / t.width) * 100, y: ((r.top + r.height / 2 - t.top) / t.height) * 100 };
+  }
+  function runEvents(ev) {
+    const pos = render.posBySeat || {};
+    let played = 0;
+    for (const e of ev) {
+      if (e.type === 'sound' && played < 2) { sound.play(e.name); played++; }
+      if (e.type === 'bet' && pos[e.seat]) flyChips({ x: pos[e.seat].x, y: pos[e.seat].y }, { x: pos[e.seat].bx, y: pos[e.seat].by }, 3);
+      if (e.type === 'win' && pos[e.seat]) flyChips(potPoint(), { x: pos[e.seat].x, y: pos[e.seat].y }, 8);
+    }
   }
 
   // ---------- render ----------
@@ -414,13 +558,16 @@
     appliedSeq = mySeq;
     if (s.gone) return exitRoom('Ya no estás en esta sala.');
     if (!s.seats) return;
+    const prev = state;
     state = s;
     updateChat(s.chat || []);
+    const events = detectEvents(prev, s);
     deadline = s.turnRemaining != null ? Date.now() + s.turnRemaining : null;
     const myTurn = s.toActSeat >= 0 && s.toActSeat === s.yourSeat;
     if (myTurn && !wasMyTurn) beep();
     wasMyTurn = myTurn;
     render();
+    runEvents(events);
   }
 
   const STAGE_TXT = { preflop: 'Preflop', flop: 'Flop', turn: 'Turn', river: 'River', showdown: '' };
@@ -482,6 +629,8 @@
     const mySeat = s.yourSeat >= 0 ? s.yourSeat : 0;
     players.sort((a, b) => ((a.seat - mySeat + 9) % 9) - ((b.seat - mySeat + 9) % 9));
     const pos = seatPositions(players.length);
+    render.posBySeat = {};
+    players.forEach((p, i) => { render.posBySeat[p.seat] = pos[i]; });
 
     players.forEach((p, i) => {
       const el = h('div', { className: 'seat' });
@@ -497,7 +646,10 @@
       p.cards.forEach((c, ci) => {
         let cls = '';
         if (c && winning.size && p.won) cls = winning.has(c) ? 'highlight' : '';
-        cards.append(cardEl(c, cls + dealCls(`${s.handNo}-${p.seat}-${ci}-${c || 'x'}`)));
+        const key = `${s.handNo}-${p.seat}-${ci}-${c || 'x'}`;
+        // en el showdown las cartas de los demás se dan vuelta; si no, se reparten
+        const anim = dealCls(key) && (c && !p.isYou && s.stage === 'showdown' ? ' flip' : ' deal');
+        cards.append(cardEl(c, cls + (anim || '')));
       });
       el.append(cards);
 
@@ -507,7 +659,13 @@
       let act = p.allIn && s.stage !== 'showdown' ? 'ALL-IN' : (p.lastAction || '');
       if (p.handName) act = p.handName;
       if (!p.inHand && s.stage !== 'waiting' && p.chips > 0) act = 'Espera la próxima';
-      plate.append(h('div', { className: p.handName ? 'hand-name' : 'action', textContent: act }));
+      if (p.thinking) plate.append(h('div', { className: 'action thinking', textContent: '🤔 pensando' }));
+      else plate.append(h('div', { className: p.handName ? 'hand-name' : 'action', textContent: act }));
+      const bub = bubbles[p.seat];
+      if (bub && bub.until > Date.now() && !p.thinking) {
+        el.append(h('div', { className: `bubble b-${bub.kind}${bub.fresh ? ' pop' : ''}`, textContent: bub.text }));
+        bub.fresh = false;
+      }
       if (p.seat === s.toActSeat && deadline) plate.append(h('div', { className: 'tbar' }, h('div')));
       if (p.seat === s.dealerSeat && s.stage !== 'waiting') plate.append(h('div', { className: 'dealer-btn', textContent: 'D' }));
       else if (p.seat === s.sbSeat && s.stage !== 'waiting') plate.append(h('div', { className: 'blind-btn', textContent: 'CC' }));

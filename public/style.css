@@ -245,3 +245,47 @@ label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 12p
   background: #111; color: #fff; padding: 10px 18px; border-radius: 10px; z-index: 200;
   box-shadow: 0 4px 20px rgba(0,0,0,.5); max-width: 90vw; text-align: center;
 }
+
+/* ---------- globito con la jugada ---------- */
+.seat .bubble {
+  position: absolute; top: -26px; left: 50%; transform: translateX(-50%); z-index: 6;
+  background: #fff; color: #14261d; font-weight: 800; font-size: clamp(11px, 1.3vw, 13px);
+  padding: 3px 9px; border-radius: 12px; white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,.5);
+}
+.seat .bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%);
+  border: 6px solid transparent; border-bottom: 0; border-top-color: inherit;
+}
+.seat .bubble { border-top-color: #fff; }
+.seat .bubble.b-raise { background: var(--gold); border-top-color: var(--gold); color: #2a1d00; }
+.seat .bubble.b-allin { background: #7b35d0; border-top-color: #7b35d0; color: #fff; }
+.seat .bubble.b-fold { background: #9aa5a0; border-top-color: #9aa5a0; color: #1b1b1b; }
+.seat .bubble.b-check { background: #bff5d4; border-top-color: #bff5d4; }
+.seat .bubble.pop { animation: bubblePop .4s cubic-bezier(.2,1.6,.4,1); }
+@keyframes bubblePop { from { transform: translateX(-50%) scale(.3); opacity: 0; } }
+
+/* ---------- bot pensando ---------- */
+.seat .action.thinking { color: #ffe8a3; }
+.seat .action.thinking::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+/* ---------- fichas que vuelan y cartas que se dan vuelta ---------- */
+.chip-fly {
+  position: absolute; width: 16px; height: 16px; border-radius: 50%; z-index: 8; pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(var(--red) 0 30deg, #fff 30deg 60deg); border: 2px solid var(--red);
+  box-shadow: 0 2px 4px rgba(0,0,0,.5);
+  transition: left .6s cubic-bezier(.3,.7,.4,1), top .6s cubic-bezier(.3,.7,.4,1), opacity .3s;
+}
+.chip-fly.gone { opacity: 0; }
+.card.flip { animation: flip .55s ease-out; }
+@keyframes flip { 0% { transform: rotateY(90deg) scale(.9); filter: brightness(.6); } 100% { transform: none; } }
+
+/* ---------- ranking ---------- */
+.ranking-wrap { overflow-x: auto; margin: 0 -4px; }
+table.ranking { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.ranking th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 4px 6px; border-bottom: 1px solid #2d5a46; }
+table.ranking td { padding: 7px 6px; border-bottom: 1px solid #1f4a37; white-space: nowrap; }
+table.ranking tr.you td { background: rgba(232,185,49,.1); }
+table.ranking td.pos { color: #6fff9e; font-weight: 700; }
+table.ranking td.neg { color: #ff8a8a; font-weight: 700; }

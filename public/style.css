@@ -65,6 +65,7 @@ label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 12p
 .box { background: rgba(255,255,255,.04); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; }
 .box h2 { margin: 0 0 12px; font-size: 18px; }
 .box .btn { margin-top: auto; }
+.box .btn.practice { margin-top: 8px; background: #3b2f73; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .code-input { text-transform: uppercase; letter-spacing: 6px; font-size: 22px; text-align: center; font-weight: 700; }
 .error { color: #ff8a8a; text-align: center; min-height: 1.2em; margin: 12px 0 0; }

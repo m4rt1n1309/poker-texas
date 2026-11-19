@@ -99,3 +99,48 @@ test('si alguien se va en medio de la mano, se retira y sus fichas quedan en el 
   assert.strictEqual(left.length, 2);
   assert.strictEqual(left.reduce((a, p) => a + p.chips, 0), 3000 - anaStack);
 });
+
+test('se puede jugar solo contra bots: juegan, mienten a veces y las fichas cuadran', () => {
+  let now = 0;
+  const me = 'humano-0001';
+  let room = game.createRoom('BOTS', me, 'Ana', { startChips: 5000, bigBlind: 20, turnTime: 30 }, now);
+  for (const level of ['facil', 'normal', 'dificil']) assert.strictEqual(game.apply(room, me, 'addBot', { level }, now), null);
+  game.apply(room, 'humano-0002', 'join', { name: 'Beto' }, now);
+  assert.strictEqual(game.apply(room, 'humano-0002', 'addBot', {}, now), 'Solo el anfitrión puede agregar bots.');
+  game.apply(room, 'humano-0002', 'leave', {}, now);
+  assert.strictEqual(game.apply(room, me, 'start', {}, now), null);
+
+  let bluffs = 0, botActions = 0, raises = 0;
+  const seenBluff = new Set();
+  for (let step = 0; step < 6000 && room.handNo < 40 && room.running; step++) {
+    now += 700;
+    room = roundtrip(room);
+    game.tick(room, now);
+    game.touch(room, me, now);
+    const total = room.seats.filter(Boolean).reduce((a, p) => a + p.chips + (room.hand && room.hand.stage !== 'showdown' ? p.total : 0), 0);
+    assert.strictEqual(total, 20000, `fichas en paso ${step}`);
+    for (const p of room.seats) {
+      if (p && p.bot && p.botMemory && p.botMemory.bluffing && !seenBluff.has(room.handNo + p.token)) { seenBluff.add(room.handNo + p.token); bluffs++; }
+      if (p && p.bot && /Sube|Apuesta|All-in/.test(p.lastAction || '')) raises++;
+      if (p && p.bot && p.lastAction) botActions++;
+    }
+    const st = game.stateFor(room, me, now);
+    if (st.actions) game.apply(room, me, 'action', { type: st.actions.canCheck ? 'check' : 'call' }, now);
+  }
+  const botChat = room.chat.filter((m) => !m.system && m.from.startsWith('🤖'));
+  console.log(`  manos: ${room.handNo}, faroles: ${bluffs}, mensajes de bots: ${botChat.length}`);
+  assert(room.handNo >= 8, 'se jugaron manos');
+  assert(bluffs > 0, 'los bots mintieron al menos una vez');
+  assert(raises > 0 && botActions > 0);
+  assert.strictEqual(room.hostToken, me, 'el anfitrión sigue siendo la persona');
+  const st = game.stateFor(room, me, now);
+  assert(st.seats.filter((s) => s && s.bot).every((s) => s.connected), 'los bots siempre están conectados');
+});
+
+test('si la única persona se va, la sala queda vacía aunque haya bots', () => {
+  const room = game.createRoom('BOTS', 'humano-0001', 'Ana', {}, 0);
+  game.apply(room, 'humano-0001', 'addBot', { level: 'facil' }, 0);
+  assert(!game.isEmpty(room));
+  game.apply(room, 'humano-0001', 'leave', {}, 0);
+  assert(game.isEmpty(room));
+});

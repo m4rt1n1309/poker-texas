@@ -1,6 +1,6 @@
 # Póker con Amigos (Texas Hold'em)
 
-Póker Texas Hold'em multijugador para jugar con amigos, cada uno desde su celular o compu, sin instalar nada. Salas con código, fichas, chat y tiempo por turno.
+Póker Texas Hold'em multijugador para jugar con amigos, cada uno desde su celular o compu, sin instalar nada. Salas con código, fichas, chat, tiempo por turno y **bots que mienten**.
 
 **Jugar:** https://poker-con-amigos.vercel.app
 
@@ -30,12 +30,32 @@ Desde ahí, cada push a `main` se publica solo.
 2. Comparte el código de 4 letras o el botón **🔗 Invitar**.
 3. Los demás entran con el código. Con 2 o más, el anfitrión toca **▶ Empezar a jugar**.
 
-- **⚙️ Anfitrión:** pausar, cambiar ciegas y tiempo, dar o quitar fichas, sacar jugadores.
+- **🤖 Practicar contra bots:** desde el inicio, arma una mesa con 3 bots (fácil, normal y difícil) y empieza sola.
+- **⚙️ Anfitrión:** pausar, cambiar ciegas y tiempo, agregar bots, dar o quitar fichas, sacar jugadores.
 - **🂠 Cartas:** cada jugador elige cartas *dibujadas* o *clásicas* (con figuras).
 - **💬 Chat** en la sala.
 - Si se acaba el tiempo, el jugador pasa (si puede) o se retira. A quien está desconectado se le dan solo 5 segundos.
 - Si alguien cierra la página o se queda sin internet, al volver a abrirla vuelve a su asiento con sus fichas.
 - Atajos en la compu: `F` retirarse, `C` o espacio pasar/igualar, `R` subir.
+
+## Los bots
+
+Juegan en el servidor (en la función de Vercel), así que no ven las cartas de nadie y siguen
+jugando aunque el anfitrión cierre la página. En su turno:
+
+1. Calculan qué tan buena es su mano simulando cientos de finales posibles contra manos al azar.
+2. La comparan con lo que cuesta seguir (lo que hay que poner contra lo que hay en el bote).
+3. **Mienten:** a veces apuestan fuerte sin tener nada (farol) y siguen mintiendo en las calles
+   siguientes; otras veces, con una mano enorme, solo pasan o igualan para hacerse los débiles.
+   En el chat también pueden decir cosas que no son verdad ("Qué mano fea me tocó 😩" con un póker de ases).
+4. Los **difíciles** además se fijan en cada rival: contra el que nunca se retira mienten menos y
+   apuestan más fuerte con buena mano; contra el que se asusta fácil, mienten más.
+
+| Nivel | Cómo juega |
+|---|---|
+| Fácil | Se equivoca al leer su mano, paga de más y casi no miente. |
+| Normal | Juega bien y miente de vez en cuando. |
+| Difícil | Calcula con más precisión, miente más y se adapta a cada rival. |
 
 ## Desarrollo
 
@@ -52,6 +72,7 @@ Con `npm run dev` también se puede jugar en la misma red WiFi: la consola muest
 
 - `api/room.js`: la función de Vercel (crear, entrar, jugar, chat, consultar).
 - `lib/game.js`: reglas de la mesa (turnos, apuestas, botes, temporizador).
+- `lib/bots.js`: cómo piensan y mienten los bots.
 - `lib/store.js`: guarda las salas en Upstash Redis (o en memoria en la compu).
 - `public/poker.js`: mazo y evaluador de manos (lo usan la función y la página).
 - `public/`: la página (`index.html`, `client.js`, `style.css`).

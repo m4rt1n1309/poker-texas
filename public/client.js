@@ -173,6 +173,18 @@
       settings: { startChips: $('setChips').value, bigBlind: $('setBB').value, turnTime: $('setTime').value },
     });
   };
+  // Sala propia con 3 bots (uno de cada nivel) que empieza sola
+  $('practiceBtn').onclick = async () => {
+    const name = getName();
+    if (!name) return;
+    await enter({
+      op: 'create', name,
+      settings: { startChips: $('setChips').value, bigBlind: $('setBB').value, turnTime: $('setTime').value },
+    });
+    if (!currentRoom) return;
+    for (const level of ['facil', 'normal', 'dificil']) await send('addBot', { level });
+    await send('start');
+  };
   $('joinBtn').onclick = () => {
     const name = getName();
     if (!name) return;
@@ -268,6 +280,19 @@
     };
     b.append(save);
 
+    b.append(h('h4', { textContent: 'Bots' }));
+    const lvl = h('select');
+    for (const [v, t] of [['facil', 'Fácil'], ['normal', 'Normal'], ['dificil', 'Difícil']]) {
+      lvl.append(h('option', { value: v, textContent: t, selected: v === 'normal' }));
+    }
+    const addBot = h('button', { className: 'btn primary', textContent: '🤖 Agregar bot' });
+    addBot.onclick = async () => {
+      await send('addBot', { level: lvl.value });
+      openModal(buildHostPanel); // se vuelve a armar para que aparezca en la lista
+    };
+    b.append(h('div', { className: 'player-row' }, lvl, addBot),
+      h('p', { className: 'sys', textContent: 'Los bots no ven tus cartas, y a veces mienten: apuestan fuerte sin nada o se hacen los débiles con una gran mano. Para sacar uno, toca ✕ en la lista.' }));
+
     b.append(h('h4', { textContent: 'Jugadores (dar o quitar fichas)' }));
     for (const p of state.seats.filter(Boolean)) {
       const amt = h('input', { type: 'number', value: s.startChips });
@@ -276,7 +301,7 @@
       const take = h('button', { className: 'btn small', textContent: '− Quitar' });
       take.onclick = () => send('chips', { seat: p.seat, amount: -Number(amt.value) });
       const row = h('div', { className: 'player-row' },
-        h('span', { className: 'pn', textContent: `${p.name} · ${fmt(p.chips)}` }), amt, give, take);
+        h('span', { className: 'pn', textContent: `${p.name}${p.bot ? ` (${p.bot})` : ''} · ${fmt(p.chips)}` }), amt, give, take);
       if (!p.isYou) {
         const kick = h('button', { className: 'btn small danger', textContent: '✕', title: 'Sacar de la sala' });
         kick.onclick = () => { send('kick', { seat: p.seat }); closeModal(); };
@@ -537,8 +562,10 @@
         const n = players.filter((p) => p.chips > 0).length;
         const btn = h('button', { className: 'btn gold', textContent: n < 2 ? 'Esperando jugadores…' : '▶ Empezar a jugar', disabled: n < 2 });
         btn.onclick = () => send('start');
-        wait.append(btn);
-        if (n < 2) wait.append(h('span', { textContent: 'Comparte el código o el enlace con tus amigos.' }));
+        const bot = h('button', { className: 'btn', textContent: '🤖 + Bot' });
+        bot.onclick = () => send('addBot', { level: 'normal' });
+        wait.append(btn, bot);
+        if (n < 2) wait.append(h('span', { textContent: 'Comparte el código con tus amigos, o suma bots para jugar ya.' }));
       } else if (!s.running) {
         wait.append('Esperando a que el anfitrión empiece la partida…');
       } else if (me && me.chips === 0 && !me.inHand) {

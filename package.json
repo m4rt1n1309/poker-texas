@@ -1,0 +1,20 @@
+{
+  "name": "poker-con-amigos",
+  "version": "1.0.0",
+  "description": "Texas Holdem multijugador para jugar con amigos",
+  "main": "api/room.js",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": "22.x"
+  },
+  "devDependencies": {
+    "express": "^4.22.3"
+  }
+}

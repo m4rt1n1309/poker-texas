@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d2a">
+  <title>Póker con Amigos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ============ LOBBY ============ -->
+  <section id="lobby" class="screen">
+    <div class="lobby-card">
+      <h1><span class="suit-red">♥</span> Póker con Amigos <span>♠</span></h1>
+      <p class="sub">Texas Hold'em · juega desde cualquier compu o celular</p>
+
+      <label>Tu nombre
+        <input id="nameInput" maxlength="16" placeholder="Ej: Martín" autocomplete="nickname">
+      </label>
+
+      <div class="lobby-cols">
+        <div class="box">
+          <h2>Unirse a una sala</h2>
+          <label>Código de la sala
+            <input id="codeInput" maxlength="4" placeholder="ABCD" autocapitalize="characters" class="code-input">
+          </label>
+          <button id="joinBtn" class="btn primary">Entrar</button>
+        </div>
+
+        <div class="box">
+          <h2>Crear sala nueva</h2>
+          <div class="grid2">
+            <label>Fichas iniciales
+              <input id="setChips" type="number" value="1000" min="10">
+            </label>
+            <label>Ciega grande
+              <input id="setBB" type="number" value="20" min="2">
+            </label>
+          </div>
+          <label>Tiempo por turno
+            <select id="setTime">
+              <option value="15">15 segundos</option>
+              <option value="30" selected>30 segundos</option>
+              <option value="45">45 segundos</option>
+              <option value="60">1 minuto</option>
+              <option value="120">2 minutos</option>
+              <option value="0">Sin límite</option>
+            </select>
+          </label>
+          <button id="createBtn" class="btn gold">Crear sala</button>
+        </div>
+      </div>
+      <p id="lobbyError" class="error"></p>
+    </div>
+  </section>
+
+  <!-- ============ MESA ============ -->
+  <section id="game" class="screen hidden">
+    <header class="topbar">
+      <div class="room-info">
+        Sala <b id="roomCode">----</b>
+        <button id="shareBtn" class="btn small" title="Copiar enlace de invitación">🔗 Invitar</button>
+      </div>
+      <div class="top-actions">
+        <button id="hostBtn" class="btn small hidden">⚙️ Anfitrión</button>
+        <button id="optionsBtn" class="btn small">🂠 Cartas</button>
+        <button id="chatToggle" class="btn small chat-toggle">💬 <span id="unread" class="badge hidden">0</span></button>
+        <button id="leaveBtn" class="btn small danger">Salir</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="table-area">
+        <div id="table" class="table">
+          <div class="felt">
+            <div id="pot" class="pot"></div>
+            <div id="board" class="board"></div>
+            <div id="status" class="status"></div>
+          </div>
+          <div id="seats"></div>
+        </div>
+
+        <div id="controls" class="controls">
+          <div id="handInfo" class="hand-info"></div>
+          <div id="actionBar" class="action-bar hidden">
+            <div class="timer-row"><div id="myTimer" class="my-timer"><div></div></div><span id="myTimerText"></span></div>
+            <div class="raise-row" id="raiseRow">
+              <button class="btn small" data-quick="min">Mín</button>
+              <button class="btn small" data-quick="half">½ bote</button>
+              <button class="btn small" data-quick="pot">Bote</button>
+              <input id="raiseSlider" type="range">
+              <input id="raiseInput" type="number" inputmode="numeric">
+            </div>
+            <div class="buttons">
+              <button id="foldBtn" class="btn danger big">Retirarse</button>
+              <button id="checkBtn" class="btn primary big">Pasar</button>
+              <button id="raiseBtn" class="btn gold big">Subir</button>
+              <button id="allinBtn" class="btn allin big">All-in</button>
+            </div>
+          </div>
+          <div id="waitBar" class="wait-bar"></div>
+        </div>
+      </div>
+
+      <aside id="chat" class="chat">
+        <div class="chat-head">Chat <button id="chatClose" class="btn small chat-close">✕</button></div>
+        <div id="chatLog" class="chat-log"></div>
+        <form id="chatForm" class="chat-form">
+          <input id="chatInput" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off">
+          <button class="btn primary">Enviar</button>
+        </form>
+      </aside>
+    </main>
+  </section>
+
+  <!-- ============ VENTANAS ============ -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/poker.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

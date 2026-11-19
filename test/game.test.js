@@ -165,6 +165,8 @@ test('ranking: la suma de ganancias y pérdidas da cero, aunque alguien se vaya 
       game.apply(room, 'humano-0002', 'leave', {}, now); // Beto se va a mitad de la partida
     }
   }
+  // si la partida terminó antes de la mano 6 (alguien se quedó sin fichas), Beto se va ahora
+  if (room.seats.some((p) => p && p.token === 'humano-0002' && !p.leaving)) game.apply(room, 'humano-0002', 'leave', {}, now);
   const ranking = game.stateFor(room, 'humano-0001', now).ranking;
   assert.strictEqual(ranking.length, 3);
   assert.strictEqual(ranking.reduce((a, r) => a + r.net, 0), 0, JSON.stringify(ranking));

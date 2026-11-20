@@ -354,8 +354,6 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
 .seat.fp-me .bubble { top: -6px; }
 .fp-hands {
   display: flex; justify-content: center; --cw: var(--cw-fp);
-  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
-  mask-image: linear-gradient(to bottom, #000 82%, transparent);
   transition: transform .4s;
 }
 .fp-hands.empty { transform: translateY(35%); }
@@ -365,6 +363,8 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
 .fp-hand {
   position: relative; width: calc(var(--cw) * 1.5); height: calc(var(--cw) * 2.3);
   transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, #000 86%, transparent);
 }
 .fp-hand.left { transform: rotate(-9deg) scaleX(-1); margin-right: calc(var(--cw) * -.32); }
 .fp-hand.right { transform: rotate(9deg); }
@@ -378,5 +378,9 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
 .fp-svg .nail { fill: #f6dccb; stroke: #c9937a; stroke-width: .8; }
 .fp-svg .crease { fill: none; stroke: #b47a55; stroke-width: 1.4; stroke-linecap: round; }
 .fp-svg .sleeve { fill: #26365e; }
-.fp-svg .cuff { fill: #e9edf5; }
+.fp-svg .cuff { fill: none; stroke: #e9edf5; stroke-width: 5; }
+.fp-svg .f-line, .fp-svg .f-skin, .fp-svg .f-dark { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.fp-svg .f-line { stroke: #a5704c; }
+.fp-svg .f-skin { stroke: var(--skin); }
+.fp-svg .f-dark { stroke: var(--skin-dark); }
 .view-pick .vp-ico { font-size: 34px; margin-bottom: 4px; }

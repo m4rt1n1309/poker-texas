@@ -669,22 +669,30 @@
   }
 
   // ---------- primera persona: dos manos que sostienen mis cartas ----------
-  // dibujo de una mano derecha (la izquierda es la misma en espejo): la carta va entre los dedos (atrás) y el pulgar (adelante)
+  // dibujo de una mano derecha (la izquierda es la misma en espejo): la carta va entre el pulgar (adelante)
+  // y el índice y el mayor (atrás); los otros dedos quedan doblados abajo. Los dedos son trazos redondeados.
+  const finger = (d, w, cls = 'skin') =>
+    `<path class="f-line" d="${d}" stroke-width="${w + 2.6}"/><path class="f-${cls}" d="${d}" stroke-width="${w}"/>`;
+
   const HAND_BACK = `<svg class="fp-svg" viewBox="0 0 150 230" aria-hidden="true">
-    <path class="skin-dark" d="M70 205 C66 170 80 120 104 104 L124 112 C136 140 134 185 128 230 L74 230 Z"/>
-    <ellipse class="skin-dark" cx="113" cy="66" rx="12" ry="9" transform="rotate(-15 113 66)"/>
-    <ellipse class="skin-dark" cx="117" cy="86" rx="13" ry="10" transform="rotate(-8 117 86)"/>
-    <ellipse class="skin-dark" cx="117" cy="106" rx="12" ry="10"/>
-    <ellipse class="skin-dark" cx="113" cy="125" rx="10" ry="9" transform="rotate(10 113 125)"/>
+    <path class="skin-dark" d="M96 230 C94 196 99 160 111 140 C121 128 139 132 144 154 C148 182 147 210 146 230 Z"/>
+    ${finger('M136 172 C139 148 134 128 123 119 C119 115 114 115 109 117', 15, 'dark')}
+    ${finger('M130 164 C132 138 128 113 118 98 C115 93 111 91 106 93', 16, 'dark')}
   </svg>`;
+
   const HAND_FRONT = `<svg class="fp-svg front" viewBox="0 0 150 230" aria-hidden="true">
-    <path class="skin" d="M66 186 C52 160 40 132 44 114 C46 102 58 98 66 106 C76 122 90 148 104 166 Z"/>
-    <path class="skin" d="M58 230 C58 200 62 168 76 152 C92 136 118 134 132 146 C142 162 140 200 134 230 Z"/>
-    <path class="nail" d="M46 112 C46 104 54 100 60 106 C62 112 58 120 52 121 C48 120 46 116 46 112 Z"/>
-    <path class="crease" d="M78 160 C86 152 98 150 108 152"/>
-    <rect class="sleeve" x="52" y="204" width="90" height="30" rx="6"/>
-    <rect class="cuff" x="52" y="202" width="90" height="7" rx="3"/>
+    ${finger('M100 198 C98 178 92 158 84 141 C80 133 77 127 76 121', 22)}
+    <ellipse class="nail" cx="77.5" cy="124" rx="7" ry="9" transform="rotate(-28 77.5 124)"/>
+    <path class="crease" d="M87 151 C92 149 96 145 97 140"/>
+    <path class="skin" d="M80 230 C78 208 82 192 91 182 C101 171 119 162 136 163 C144 164 147 171 147 180 L147 230 Z"/>
+    <path class="skin" d="M147 168 C134 156 113 155 105 164 C98 172 101 188 112 195 C124 202 139 203 147 199 Z"/>
+    <path class="crease" d="M106 180 C114 182 126 182 136 179"/>
+    <path class="crease" d="M112 193 C120 194 130 194 140 191"/>
+    <path class="crease" d="M90 206 C92 196 97 188 104 182"/>
+    <path class="sleeve" d="M78 230 L82 212 C104 206 126 206 147 211 L147 230 Z"/>
+    <path class="cuff" d="M82 212 C104 206 126 206 147 211" />
   </svg>`;
+
   function handsRig(cardEls) {
     const wrap = h('div', { className: 'fp-hands' + (cardEls.length ? '' : ' empty') });
     ['left', 'right'].forEach((side, i) => {

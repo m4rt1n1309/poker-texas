@@ -360,7 +360,7 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
 .seat.fp-me .plate .tbar { position: absolute; left: 10px; right: 10px; bottom: 2px; margin: 0; height: 3px; }
 .seat.fp-me .bubble { top: -6px; }
 .fp-hands {
-  display: flex; justify-content: center; gap: calc(var(--cw) * .12); --cw: var(--cw-fp);
+  display: flex; justify-content: center; gap: calc(var(--cw) * .04); --cw: var(--cw-fp);
   transition: transform .4s;
 }
 .fp-hands.empty { transform: translateY(30%); }
@@ -370,12 +370,12 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
 /* medidas tomadas de la foto: la mano mide 2,08 cartas de ancho y la carta asoma arriba a la derecha */
 .fp-hand {
   position: relative; width: calc(var(--cw) * 2.816); height: calc(var(--cw) * 2.204);
-  transform-origin: 75% 100%;
+  transform-origin: 50% 100%; /* al centro: si no, el espejo corre la mano derecha hacia afuera */
   -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent);
   mask-image: linear-gradient(to bottom, #000 84%, transparent);
 }
-.fp-hand.left { transform: rotate(-4deg); }
-.fp-hand.right { transform: scaleX(-1) rotate(-4deg); }
+.fp-hand.left { transform: rotate(-3deg); }
+.fp-hand.right { transform: scaleX(-1) rotate(-3deg); }
 .fp-slot { position: absolute; left: calc(var(--cw) * 1.816); top: 0; z-index: 1; }
 .fp-hand.right .fp-slot { transform: scaleX(-1); }
 .fp-slot .card { box-shadow: 0 4px 10px rgba(0,0,0,.5); }

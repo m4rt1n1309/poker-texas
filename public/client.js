@@ -669,39 +669,15 @@
   }
 
   // ---------- primera persona: dos manos que sostienen mis cartas ----------
-  // dibujo de una mano derecha (la izquierda es la misma en espejo): la carta va entre el pulgar (adelante)
-  // y el índice y el mayor (atrás); los otros dedos quedan doblados abajo. Los dedos son trazos redondeados.
-  const finger = (d, w, cls = 'skin') =>
-    `<path class="f-line" d="${d}" stroke-width="${w + 2.6}"/><path class="f-${cls}" d="${d}" stroke-width="${w}"/>`;
-
-  const HAND_BACK = `<svg class="fp-svg" viewBox="0 0 150 230" aria-hidden="true">
-    <path class="skin-dark" d="M96 230 C94 196 99 160 111 140 C121 128 139 132 144 154 C148 182 147 210 146 230 Z"/>
-    ${finger('M136 172 C139 148 134 128 123 119 C119 115 114 115 109 117', 15, 'dark')}
-    ${finger('M130 164 C132 138 128 113 118 98 C115 93 111 91 106 93', 16, 'dark')}
-  </svg>`;
-
-  const HAND_FRONT = `<svg class="fp-svg front" viewBox="0 0 150 230" aria-hidden="true">
-    ${finger('M100 198 C98 178 92 158 84 141 C80 133 77 127 76 121', 22)}
-    <ellipse class="nail" cx="77.5" cy="124" rx="7" ry="9" transform="rotate(-28 77.5 124)"/>
-    <path class="crease" d="M87 151 C92 149 96 145 97 140"/>
-    <path class="skin" d="M80 230 C78 208 82 192 91 182 C101 171 119 162 136 163 C144 164 147 171 147 180 L147 230 Z"/>
-    <path class="skin" d="M147 168 C134 156 113 155 105 164 C98 172 101 188 112 195 C124 202 139 203 147 199 Z"/>
-    <path class="crease" d="M106 180 C114 182 126 182 136 179"/>
-    <path class="crease" d="M112 193 C120 194 130 194 140 191"/>
-    <path class="crease" d="M90 206 C92 196 97 188 104 182"/>
-    <path class="sleeve" d="M78 230 L82 212 C104 206 126 206 147 211 L147 230 Z"/>
-    <path class="cuff" d="M82 212 C104 206 126 206 147 211" />
-  </svg>`;
-
+  // foto de una mano (Daniel Reche, Pexels) recortada; la otra mano es la misma en espejo.
+  // La carta va detrás de la foto, justo donde estaba la tarjeta que sostenía, así el pulgar queda encima.
   function handsRig(cardEls) {
     const wrap = h('div', { className: 'fp-hands' + (cardEls.length ? '' : ' empty') });
     ['left', 'right'].forEach((side, i) => {
       const rig = h('div', { className: `fp-hand ${side}` });
-      rig.innerHTML = HAND_BACK;
       const slot = h('div', { className: 'fp-slot' });
       if (cardEls[i]) slot.append(cardEls[i]);
-      rig.append(slot);
-      rig.insertAdjacentHTML('beforeend', HAND_FRONT);
+      rig.append(slot, h('img', { className: 'fp-img', src: 'img/hand.webp', alt: '', draggable: false }));
       wrap.append(rig);
     });
     return wrap;

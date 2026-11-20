@@ -82,4 +82,5 @@ Con `npm run dev` también se puede jugar en la misma red WiFi: la consola muest
 - `public/poker.js`: mazo y evaluador de manos (lo usan la función y la página).
 - `public/`: la página (`index.html`, `client.js`, `style.css`) y el reglamento (`rules.js`).
 - `public/deck/`: mazo clásico *SVG-cards* (David Bellot y otros, licencia LGPL 2.1, ver `public/deck/LICENSE`).
+- `public/img/hand.webp`: mano recortada de una foto de Daniel Reche en Pexels (https://www.pexels.com/photo/3616891/), licencia Pexels (uso gratis, https://www.pexels.com/license/). La otra mano es la misma en espejo.
 - `dev-server.js`: servidor para probar en la compu (Vercel no lo usa).

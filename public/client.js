@@ -14,6 +14,7 @@
     store.set('poker_token', token);
   }
   let cardStyle = store.get('poker_cards', 'drawn'); // 'drawn' | 'classic'
+  let view = store.get('poker_view', 'mesa'); // 'mesa' | 'fp' (primera persona)
   let currentRoom = null;
   let state = null;
   let deadline = null;
@@ -56,6 +57,47 @@
       <div class="pip">${face ? rt + sym : sym}</div>
       <div class="corner br">${rt}<small>${sym}</small></div>`;
     return el;
+  }
+
+  // ---------- fichas de colores (como en el casino: cada color vale distinto) ----------
+  const CHIPS = [
+    { v: 5000, c: '#e46a1f', s: '#fff' }, { v: 1000, c: '#e8b931', s: '#5a3a00' },
+    { v: 500, c: '#7b3fc4', s: '#fff' }, { v: 100, c: '#1c1c1c', s: '#fff' },
+    { v: 25, c: '#1f9d55', s: '#fff' }, { v: 5, c: '#d7263d', s: '#fff' }, { v: 1, c: '#f1f1f1', s: '#3a7bd5' },
+  ];
+  function chipBreakdown(amount) {
+    const out = [];
+    let left = Math.round(amount);
+    for (const ch of CHIPS) {
+      const n = Math.floor(left / ch.v);
+      if (n) { out.push({ ...ch, n }); left -= n * ch.v; }
+    }
+    return out;
+  }
+  function paintChip(el, ch) {
+    el.style.setProperty('--c', ch.c);
+    el.style.setProperty('--s', ch.s);
+    return el;
+  }
+  // pilitas de fichas para un monto (las de más valor primero)
+  function chipStacks(amount, maxStacks = 3, maxPer = 6) {
+    const wrap = document.createElement('span');
+    wrap.className = 'stacks';
+    for (const ch of chipBreakdown(amount).slice(0, maxStacks)) {
+      const st = document.createElement('span');
+      st.className = 'stack';
+      st.title = `${ch.n} × ${fmt(ch.v)}`;
+      const k = Math.min(ch.n, maxPer);
+      for (let i = 0; i < k; i++) {
+        const c = paintChip(document.createElement('span'), ch);
+        c.className = 'chip';
+        c.style.bottom = i * 3 + 'px';
+        st.append(c);
+      }
+      st.style.height = 14 + (k - 1) * 3 + 'px';
+      wrap.append(st);
+    }
+    return wrap;
   }
 
   // ---------- utilidades de interfaz ----------
@@ -256,7 +298,20 @@
       };
       pick.append(btn);
     }
-    b.append(pick, h('p', { className: 'sys', textContent: 'Cada jugador elige el estilo que prefiera; no cambia nada para los demás.' }));
+    b.append(pick);
+    b.append(h('h3', { textContent: 'Vista de la mesa' }));
+    const vpick = h('div', { className: 'style-pick view-pick' });
+    for (const [v, ico, label] of [['mesa', '🔝', 'Desde arriba'], ['fp', '🙌', 'Primera persona']]) {
+      const btn = h('button', { className: v === view ? 'sel' : '' }, h('div', { className: 'vp-ico', textContent: ico }), label);
+      btn.onclick = () => {
+        view = v;
+        store.set('poker_view', v);
+        closeModal();
+        render();
+      };
+      vpick.append(btn);
+    }
+    b.append(vpick, h('p', { className: 'sys', textContent: 'En primera persona ves tus cartas en tus manos, como sentado a la mesa. Cada jugador elige lo que prefiera; no cambia nada para los demás.' }));
   });
 
   $('hostBtn').onclick = () => openModal(buildHostPanel);
@@ -529,20 +584,21 @@
       bubbles[p.seat] = { text: p.lastAction, kind, until: Date.now() + 2800, fresh: true };
       ev.push({ type: 'sound', name: kind === 'raise' ? 'chips' : kind });
       const before = prev.seats[p.seat];
-      if (before && s.handNo === prev.handNo && p.bet > before.bet) ev.push({ type: 'bet', seat: p.seat });
+      if (before && s.handNo === prev.handNo && p.bet > before.bet) ev.push({ type: 'bet', seat: p.seat, amount: p.bet - before.bet });
     });
     if (s.stage === 'showdown' && s.results && !(prev.stage === 'showdown' && prev.handNo === s.handNo)) {
       ev.push({ type: 'sound', name: 'win' });
-      s.seats.forEach((p) => { if (p && p.won) ev.push({ type: 'win', seat: p.seat }); });
+      s.seats.forEach((p) => { if (p && p.won) ev.push({ type: 'win', seat: p.seat, amount: p.won }); });
     }
     return ev;
   }
 
   // fichas que vuelan entre dos puntos de la mesa (en % del tamaño de la mesa)
-  function flyChips(from, to, n) {
+  function flyChips(from, to, n, amount) {
     const table = $('table');
+    const kinds = chipBreakdown(amount || 1);
     for (let i = 0; i < n; i++) {
-      const c = h('div', { className: 'chip-fly' });
+      const c = paintChip(h('div', { className: 'chip-fly' }), kinds[i % kinds.length]);
       c.style.left = from.x + (Math.random() * 3 - 1.5) + '%';
       c.style.top = from.y + (Math.random() * 3 - 1.5) + '%';
       c.style.transitionDelay = i * 70 + 'ms';
@@ -565,8 +621,8 @@
     let played = 0;
     for (const e of ev) {
       if (e.type === 'sound' && played < 2) { sound.play(e.name); played++; }
-      if (e.type === 'bet' && pos[e.seat]) flyChips({ x: pos[e.seat].x, y: pos[e.seat].y }, { x: pos[e.seat].bx, y: pos[e.seat].by }, 3);
-      if (e.type === 'win' && pos[e.seat]) flyChips(potPoint(), { x: pos[e.seat].x, y: pos[e.seat].y }, 8);
+      if (e.type === 'bet' && pos[e.seat]) flyChips({ x: pos[e.seat].x, y: pos[e.seat].y }, { x: pos[e.seat].bx, y: pos[e.seat].by }, 3, e.amount);
+      if (e.type === 'win' && pos[e.seat]) flyChips(potPoint(), { x: pos[e.seat].x, y: pos[e.seat].y }, 8, e.amount);
     }
   }
 
@@ -590,11 +646,14 @@
 
   const STAGE_TXT = { preflop: 'Preflop', flop: 'Flop', turn: 'Turn', river: 'River', showdown: '' };
 
-  function seatPositions(n) {
+  // fp: yo no estoy en la ronda (soy las manos de abajo) y los demás se reparten por los costados y arriba
+  function seatPositions(n, fp) {
     const portrait = window.innerWidth / window.innerHeight < 1;
     const rx = portrait ? 40 : 45, ry = portrait ? 41 : 37;
     return Array.from({ length: n }, (_, i) => {
-      const ang = (Math.PI / 2) + (i * 2 * Math.PI) / n;
+      if (fp && i === 0) return { x: 50, y: 92, bx: 50, by: 70 };
+      const deg = fp ? 145 + (i * 250) / n : 90 + (i * 360) / n;
+      const ang = (deg * Math.PI) / 180;
       return {
         x: 50 + rx * Math.cos(ang), y: 53 + ry * Math.sin(ang),
         bx: 50 + rx * 0.58 * Math.cos(ang), by: 55 + ry * 0.55 * Math.sin(ang),
@@ -607,6 +666,37 @@
   function dealCls(key) {
     nowSeen.add(key);
     return seen.has(key) ? '' : ' deal';
+  }
+
+  // ---------- primera persona: dos manos que sostienen mis cartas ----------
+  // dibujo de una mano derecha (la izquierda es la misma en espejo): la carta va entre los dedos (atrás) y el pulgar (adelante)
+  const HAND_BACK = `<svg class="fp-svg" viewBox="0 0 150 230" aria-hidden="true">
+    <path class="skin-dark" d="M70 205 C66 170 80 120 104 104 L124 112 C136 140 134 185 128 230 L74 230 Z"/>
+    <ellipse class="skin-dark" cx="113" cy="66" rx="12" ry="9" transform="rotate(-15 113 66)"/>
+    <ellipse class="skin-dark" cx="117" cy="86" rx="13" ry="10" transform="rotate(-8 117 86)"/>
+    <ellipse class="skin-dark" cx="117" cy="106" rx="12" ry="10"/>
+    <ellipse class="skin-dark" cx="113" cy="125" rx="10" ry="9" transform="rotate(10 113 125)"/>
+  </svg>`;
+  const HAND_FRONT = `<svg class="fp-svg front" viewBox="0 0 150 230" aria-hidden="true">
+    <path class="skin" d="M66 186 C52 160 40 132 44 114 C46 102 58 98 66 106 C76 122 90 148 104 166 Z"/>
+    <path class="skin" d="M58 230 C58 200 62 168 76 152 C92 136 118 134 132 146 C142 162 140 200 134 230 Z"/>
+    <path class="nail" d="M46 112 C46 104 54 100 60 106 C62 112 58 120 52 121 C48 120 46 116 46 112 Z"/>
+    <path class="crease" d="M78 160 C86 152 98 150 108 152"/>
+    <rect class="sleeve" x="52" y="204" width="90" height="30" rx="6"/>
+    <rect class="cuff" x="52" y="202" width="90" height="7" rx="3"/>
+  </svg>`;
+  function handsRig(cardEls) {
+    const wrap = h('div', { className: 'fp-hands' + (cardEls.length ? '' : ' empty') });
+    ['left', 'right'].forEach((side, i) => {
+      const rig = h('div', { className: `fp-hand ${side}` });
+      rig.innerHTML = HAND_BACK;
+      const slot = h('div', { className: 'fp-slot' });
+      if (cardEls[i]) slot.append(cardEls[i]);
+      rig.append(slot);
+      rig.insertAdjacentHTML('beforeend', HAND_FRONT);
+      wrap.append(rig);
+    });
+    return wrap;
   }
 
   function render() {
@@ -629,7 +719,9 @@
       if (c && winning.size) cls = winning.has(c) ? 'highlight' : 'dim';
       board.append(c ? cardEl(c, cls + dealCls(`${s.handNo}-b${i}-${c}`)) : cardEl('empty'));
     }
-    $('pot').textContent = s.pot ? `Bote: ${fmt(s.pot)}` : '';
+    const potEl = $('pot');
+    potEl.innerHTML = '';
+    if (s.pot) potEl.append(chipStacks(s.pot, 4, 8), h('span', { textContent: `Bote: ${fmt(s.pot)}` }));
 
     let status = '';
     if (s.stage === 'waiting') status = s.running ? 'Preparando la mano…' : 'Esperando que el anfitrión empiece';
@@ -646,7 +738,9 @@
     const players = s.seats.filter(Boolean);
     const mySeat = s.yourSeat >= 0 ? s.yourSeat : 0;
     players.sort((a, b) => ((a.seat - mySeat + 9) % 9) - ((b.seat - mySeat + 9) % 9));
-    const pos = seatPositions(players.length);
+    const fp = view === 'fp' && s.yourSeat >= 0;
+    $('table').classList.toggle('fp', fp);
+    const pos = seatPositions(players.length, fp);
     render.posBySeat = {};
     players.forEach((p, i) => { render.posBySeat[p.seat] = pos[i]; });
 
@@ -660,16 +754,21 @@
       if (!p.connected) el.classList.add('offline');
       if (p.won) el.classList.add('winner');
 
-      const cards = h('div', { className: 'cards' });
+      const handCards = [];
       p.cards.forEach((c, ci) => {
         let cls = '';
         if (c && winning.size && p.won) cls = winning.has(c) ? 'highlight' : '';
         const key = `${s.handNo}-${p.seat}-${ci}-${c || 'x'}`;
         // en el showdown las cartas de los demás se dan vuelta; si no, se reparten
         const anim = dealCls(key) && (c && !p.isYou && s.stage === 'showdown' ? ' flip' : ' deal');
-        cards.append(cardEl(c, cls + (anim || '')));
+        handCards.push(cardEl(c, cls + (anim || '')));
       });
-      el.append(cards);
+      if (fp && p.isYou) {
+        el.classList.add('fp-me');
+        el.append(handsRig(handCards));
+      } else {
+        el.append(h('div', { className: 'cards' }, ...handCards));
+      }
 
       const plate = h('div', { className: 'plate' });
       plate.append(h('div', { className: 'name', textContent: (p.isHost ? '👑 ' : '') + p.name }));
@@ -693,7 +792,7 @@
       seatsEl.append(el);
 
       if (p.bet > 0) {
-        const bet = h('div', { className: 'bet' }, h('span', { className: 'chip-ico' }), fmt(p.bet));
+        const bet = h('div', { className: 'bet' }, chipStacks(p.bet), fmt(p.bet));
         bet.style.left = pos[i].bx + '%';
         bet.style.top = pos[i].by + '%';
         seatsEl.append(bet);

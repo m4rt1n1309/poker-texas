@@ -159,11 +159,19 @@ label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 12p
   font-size: clamp(11px, 1.3vw, 14px); font-weight: 700;
   background: rgba(0,0,0,.45); padding: 2px 8px 2px 3px; border-radius: 12px;
 }
-.chip-ico {
-  width: 16px; height: 16px; border-radius: 50%;
-  background: repeating-conic-gradient(var(--red) 0 30deg, #fff 30deg 60deg);
-  border: 2px solid var(--red); display: inline-block;
+/* fichas de colores: centro liso, anillo blanco y borde con rayas */
+.chip, .chip-fly {
+  --c: var(--red); --s: #fff;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--c) 0 40%, rgba(255,255,255,.85) 41% 48%, transparent 49%),
+    repeating-conic-gradient(var(--c) 0 30deg, var(--s) 30deg 45deg);
+  border: 1px solid rgba(0,0,0,.55);
 }
+.stacks { display: inline-flex; align-items: flex-end; gap: 1px; }
+.stack { position: relative; width: 16px; display: inline-block; }
+.chip { position: absolute; left: 0; width: 16px; height: 14px; box-shadow: 0 1px 0 rgba(0,0,0,.6); }
+.pot { display: flex; align-items: center; gap: 6px; }
 
 /* ---------- cartas ---------- */
 .card {
@@ -292,7 +300,6 @@ label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 12p
 .chip-fly {
   position: absolute; width: 16px; height: 16px; border-radius: 50%; z-index: 8; pointer-events: none;
   transform: translate(-50%, -50%);
-  background: repeating-conic-gradient(var(--red) 0 30deg, #fff 30deg 60deg); border: 2px solid var(--red);
   box-shadow: 0 2px 4px rgba(0,0,0,.5);
   transition: left .6s cubic-bezier(.3,.7,.4,1), top .6s cubic-bezier(.3,.7,.4,1), opacity .3s;
 }
@@ -325,3 +332,51 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
   .rule-hand .rh-title { grid-row: auto; }
   .rule-hand .rh-cards { --cw: 34px; }
 }
+
+/* ---------- vista en primera persona ---------- */
+:root { --cw-fp: clamp(52px, 6.6vw, 86px); --skin: #e8b48c; --skin-dark: #c98d66; }
+@media (max-aspect-ratio: 1/1) { :root { --cw-fp: clamp(44px, 13vw, 74px); } }
+.table.fp {
+  margin-bottom: calc(var(--cw-fp) * .6);
+  max-height: calc(100dvh - 250px - var(--cw-fp) * .6);
+}
+@media (max-aspect-ratio: 1/1) { .table.fp { max-height: calc(100dvh - 255px - var(--cw-fp) * .6); } }
+/* la mesa se inclina como si estuvieras sentado */
+.table.fp + .controls { margin-top: 10px; }
+.table.fp .felt { transform: perspective(900px) rotateX(20deg); transform-origin: 50% 100%; padding-bottom: calc(var(--cw-fp) * .8); }
+.seat.fp-me {
+  top: auto !important; bottom: calc(var(--cw-fp) * -.6); width: auto;
+  transform: translateX(-50%); z-index: 4;
+}
+.seat.fp-me .plate {
+  position: absolute; left: calc(100% - 4px); bottom: 34%; width: clamp(78px, 12vw, 130px);
+}
+.seat.fp-me .bubble { top: -6px; }
+.fp-hands {
+  display: flex; justify-content: center; --cw: var(--cw-fp);
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  transition: transform .4s;
+}
+.fp-hands.empty { transform: translateY(35%); }
+.seat.fp-me.folded { opacity: .7; }
+.seat.fp-me.folded .fp-hands { transform: translateY(30%); }
+.seat.fp-me.folded .fp-slot { filter: brightness(.5); }
+.fp-hand {
+  position: relative; width: calc(var(--cw) * 1.5); height: calc(var(--cw) * 2.3);
+  transform-origin: 50% 100%;
+}
+.fp-hand.left { transform: rotate(-9deg) scaleX(-1); margin-right: calc(var(--cw) * -.32); }
+.fp-hand.right { transform: rotate(9deg); }
+.fp-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; overflow: visible; }
+.fp-svg.front { z-index: 2; pointer-events: none; }
+.fp-slot { position: absolute; left: calc(var(--cw) * .1); top: 0; z-index: 1; }
+.fp-hand.left .fp-slot { transform: scaleX(-1); }
+.fp-slot .card { box-shadow: 0 4px 10px rgba(0,0,0,.5); }
+.fp-svg .skin { fill: var(--skin); stroke: #a8714d; stroke-width: 1.2; }
+.fp-svg .skin-dark { fill: var(--skin-dark); stroke: #a8714d; stroke-width: 1.2; }
+.fp-svg .nail { fill: #f6dccb; stroke: #c9937a; stroke-width: .8; }
+.fp-svg .crease { fill: none; stroke: #b47a55; stroke-width: 1.4; stroke-linecap: round; }
+.fp-svg .sleeve { fill: #26365e; }
+.fp-svg .cuff { fill: #e9edf5; }
+.view-pick .vp-ico { font-size: 34px; margin-bottom: 4px; }

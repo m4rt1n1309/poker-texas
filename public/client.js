@@ -14,7 +14,7 @@
     store.set('poker_token', token);
   }
   let cardStyle = store.get('poker_cards', 'drawn'); // 'drawn' | 'classic'
-  let view = store.get('poker_view', 'mesa'); // 'mesa' | 'fp' (primera persona)
+  let view = store.get('poker_view', 'fp'); // 'mesa' | 'fp' (primera persona)
   let currentRoom = null;
   let state = null;
   let deadline = null;

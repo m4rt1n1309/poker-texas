@@ -48,6 +48,27 @@
               <option value="0">Sin límite</option>
             </select>
           </label>
+          <div class="grid2">
+            <label>Modo
+              <select id="setTour">
+                <option value="0" selected>Mesa normal</option>
+                <option value="18">🏆 Torneo de 18 (2 mesas)</option>
+                <option value="27">🏆 Torneo de 27 (3 mesas)</option>
+                <option value="36">🏆 Torneo de 36 (4 mesas)</option>
+                <option value="45">🏆 Torneo de 45 (5 mesas)</option>
+                <option value="54">🏆 Torneo de 54 (6 mesas)</option>
+              </select>
+            </label>
+            <label id="setLevelWrap" class="hidden">Suben las ciegas
+              <select id="setLevel">
+                <option value="5">cada 5 manos</option>
+                <option value="8" selected>cada 8 manos</option>
+                <option value="12">cada 12 manos</option>
+                <option value="20">cada 20 manos</option>
+              </select>
+            </label>
+          </div>
+          <p id="tourHint" class="sys hidden">En el torneo, las mesas se completan con bots. Todos empiezan con las mismas fichas, las ciegas suben solas y cuando quedan 9 se arma la mesa final.</p>
           <button id="createBtn" class="btn gold">Crear sala</button>
           <button id="practiceBtn" class="btn practice">🤖 Practicar contra bots</button>
         </div>
@@ -61,6 +82,7 @@
     <header class="topbar">
       <div class="room-info">
         Sala <b id="roomCode">----</b>
+        <button id="tourBtn" class="btn small tour-chip hidden" title="Posiciones del torneo"></button>
       </div>
       <div class="top-actions">
         <button id="chatToggle" class="btn small chat-toggle">💬 <span id="unread" class="badge hidden">0</span></button>

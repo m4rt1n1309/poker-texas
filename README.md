@@ -32,6 +32,7 @@ De **2 a 9 jugadores** por mesa (personas y bots). El reglamento completo, con t
 2. Comparte el código de 4 letras o el botón **🔗 Invitar**.
 3. Los demás entran con el código. Con 2 o más, el anfitrión toca **▶ Empezar a jugar**.
 
+- **🏆 Torneo de varias mesas:** al crear la sala, en *Modo*, se elige un torneo de 18 a 54 jugadores (2 a 6 mesas) y cada cuántas manos suben las ciegas. Las personas juegan en la mesa 1 y los lugares que faltan se completan con bots. Las otras mesas son solo de bots y juegan una mano entera (al instante, con las mismas reglas) cada vez que empieza una en la mesa 1. Entre manos se sacan los eliminados con su puesto, se cierran mesas y se equilibran moviendo bots; con 9 o menos jugadores se arma la **mesa final**. Quien queda eliminado puede seguir mirando. El botón 🏆 de arriba muestra las posiciones.
 - **🤖 Practicar contra bots:** desde el inicio, arma una mesa con 3 bots (fácil, normal y difícil) y empieza sola.
 - **⚙️ Anfitrión:** pausar, cambiar ciegas y tiempo, agregar bots, dar o quitar fichas, sacar jugadores.
 - **🂠 Cartas:** cada jugador elige cartas *dibujadas* o *clásicas* (con figuras).

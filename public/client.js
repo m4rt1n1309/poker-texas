@@ -210,12 +210,21 @@
     }
   }
 
+  $('setTour').onchange = () => {
+    const on = $('setTour').value !== '0';
+    $('setLevelWrap').classList.toggle('hidden', !on);
+    $('tourHint').classList.toggle('hidden', !on);
+    $('createBtn').textContent = on ? '🏆 Crear torneo' : 'Crear sala';
+  };
   $('createBtn').onclick = () => {
     const name = getName();
     if (!name) return;
     enter({
       op: 'create', name,
-      settings: { startChips: $('setChips').value, bigBlind: $('setBB').value, turnTime: $('setTime').value },
+      settings: {
+        startChips: $('setChips').value, bigBlind: $('setBB').value, turnTime: $('setTime').value,
+        tourSize: $('setTour').value, levelHands: $('setLevel').value,
+      },
     });
   };
   // Sala propia con 3 bots (uno de cada nivel) que empieza sola
@@ -272,7 +281,9 @@
 
   $('leaveBtn').onclick = () => openModal((b) => {
     b.append(h('h3', { textContent: '¿Salir de la sala?' }),
-      h('p', { textContent: 'Si estás en una mano, te retiras. Perderás tus fichas en esta sala.' }));
+      h('p', { textContent: state && state.tour && state.tour.started && state.yourSeat >= 0
+        ? 'Quedarás eliminado del torneo y no podrás volver a entrar.'
+        : 'Si estás en una mano, te retiras. Perderás tus fichas en esta sala.' }));
     const yes = h('button', { className: 'btn danger', textContent: 'Sí, salir' });
     yes.onclick = () => {
       send('leave');
@@ -322,7 +333,40 @@
   $('rulesBtn').onclick = showRules;
   $('rulesLobbyBtn').onclick = showRules;
 
-  $('rankBtn').onclick = () => openModal((b) => {
+  // posiciones del torneo
+  function buildTourPanel(b) {
+    const t = state && state.tour;
+    if (!t) return;
+    b.append(h('h3', { textContent: '🏆 Torneo' }));
+    if (!t.started) {
+      b.append(h('p', { textContent: `Torneo de ${t.size} jugadores. Cuando el anfitrión lo empiece, las mesas se completan con bots. Las ciegas suben cada ${t.levelHands} manos y con 9 jugadores se arma la mesa final.` }));
+      return;
+    }
+    if (t.finished) b.append(h('p', { className: 'tour-end', textContent: `🏆 Ganó ${t.winner}${t.myPlace ? ` · Tú quedaste ${t.myPlace}º de ${t.size}` : ''}` }));
+    const head = h('div', { className: 'tour-head' });
+    const box = (big, small) => head.append(h('div', {}, h('b', { textContent: big }), h('small', { textContent: small })));
+    box(`${t.left} / ${t.size}`, 'quedan');
+    box(t.tables === 1 ? 'Final' : String(t.tables), t.tables === 1 ? 'mesa' : 'mesas');
+    box(`${fmt(t.smallBlind)}/${fmt(t.bigBlind)}`, `ciegas · nivel ${t.level}`);
+    if (!t.finished) box(fmt(t.nextBigBlind), t.nextLevelIn ? `ciega grande en ${t.nextLevelIn} mano${t.nextLevelIn > 1 ? 's' : ''}` : 'ciega grande desde la próxima mano');
+    b.append(head);
+    const table = h('table', { className: 'ranking' });
+    table.append(h('tr', {}, ...['', 'Jugador', 'Fichas', 'Mesa'].map((x) => h('th', { textContent: x }))));
+    const medals = ['🥇', '🥈', '🥉'];
+    t.standings.forEach((r, i) => {
+      const pos = r.place || i + 1;
+      table.append(h('tr', { className: (r.isYou ? 'you ' : '') + (r.place ? 'out' : '') },
+        h('td', { textContent: medals[pos - 1] || `${pos}º` }),
+        h('td', { textContent: r.name + (r.isYou ? ' (tú)' : '') }),
+        h('td', { textContent: r.place ? 'eliminado' : fmt(r.chips) }),
+        h('td', { textContent: r.place ? '—' : r.table === 1 ? 'esta' : String(r.table) })));
+    });
+    b.append(h('div', { className: 'ranking-wrap' }, table),
+      h('p', { className: 'sys', textContent: 'Las otras mesas son de bots y juegan una mano cada vez que empieza una en esta. Para que las mesas queden parejas, a veces un bot se cambia de mesa.' }));
+  }
+  $('tourBtn').onclick = () => openModal(buildTourPanel);
+
+  $('rankBtn').onclick = () => (state && state.tour && state.tour.started ? openModal(buildTourPanel) : openModal((b) => {
     const list = (state && state.ranking) || [];
     b.append(h('h3', { textContent: '📊 Ranking de la sala' }));
     if (!list.length) { b.append(h('p', { textContent: 'Todavía no hay datos.' })); return; }
@@ -342,7 +386,7 @@
     });
     b.append(h('div', { className: 'ranking-wrap' }, table),
       h('p', { className: 'sys', textContent: 'Ganancia = fichas que tiene ahora menos las que recibió (al entrar o de regalo del anfitrión). "Manos" = ganadas / jugadas. El ranking dura lo que dure la sala: se borra después de 7 días sin jugar.' }));
-  });
+  }));
 
   function buildHostPanel(b) {
     if (!state) return;
@@ -354,7 +398,37 @@
       textContent: state.running ? '⏸ Pausar después de esta mano' : '▶ Empezar a jugar',
     });
     startBtn.onclick = () => { send(state.running ? 'pause' : 'start'); closeModal(); };
+    const tour = state.tour && state.tour.started ? state.tour : null;
+    if (state.tour && !state.tour.started && !state.running) startBtn.textContent = `🏆 Empezar el torneo (${state.tour.size} jugadores)`;
+    if (state.tour && state.tour.finished) startBtn.classList.add('hidden');
     b.append(startBtn);
+    if (tour) {
+      // en el torneo las ciegas suben solas y no se regalan fichas
+      const tt = h('select');
+      for (const [v, t] of [[15, '15 s'], [30, '30 s'], [45, '45 s'], [60, '1 min'], [120, '2 min'], [0, 'Sin límite']]) {
+        tt.append(h('option', { value: v, textContent: t, selected: v === s.turnTime }));
+      }
+      const sp = h('select');
+      for (const [v, t] of [['lenta', 'Lenta (4-5 s)'], ['normal', 'Normal (2-3 s)'], ['rapida', 'Rápida (1 s)']]) {
+        sp.append(h('option', { value: v, textContent: t, selected: v === (s.botSpeed || 'normal') }));
+      }
+      const save = h('button', { className: 'btn primary', textContent: 'Guardar' });
+      save.onclick = () => { send('settings', { turnTime: tt.value, botSpeed: sp.value }); toast('Guardado'); };
+      b.append(h('h4', { textContent: 'Torneo' }),
+        h('p', { className: 'sys', textContent: 'Las ciegas suben solas y nadie puede recibir fichas de regalo.' }),
+        h('label', {}, 'Tiempo por turno', tt), h('label', {}, 'Velocidad de los bots', sp), save,
+        h('h4', { textContent: 'Jugadores de esta mesa' }));
+      for (const p of state.seats.filter(Boolean)) {
+        const row = h('div', { className: 'player-row' }, h('span', { className: 'pn', textContent: `${p.name}${p.bot ? ` (${p.bot})` : ''} · ${fmt(p.chips)}` }));
+        if (!p.isYou) {
+          const kick = h('button', { className: 'btn small danger', textContent: '✕', title: 'Sacar del torneo' });
+          kick.onclick = () => { send('kick', { seat: p.seat }); closeModal(); };
+          row.append(kick);
+        }
+        b.append(row);
+      }
+      return;
+    }
 
     b.append(h('h4', { textContent: 'Reglas (se aplican en la próxima mano)' }));
     const bb = h('input', { type: 'number', value: s.bigBlind, min: 2 });
@@ -647,18 +721,38 @@
   const STAGE_TXT = { preflop: 'Preflop', flop: 'Flop', turn: 'Turn', river: 'River', showdown: '' };
 
   // fp: yo no estoy en la ronda (soy las manos de abajo) y los demás se reparten por los costados y arriba
+  // Los asientos se reparten a distancias iguales medidas "en asientos": como cada asiento es
+  // más ancho que alto, por los costados de la mesa entran más que si se repartieran por ángulo.
   function seatPositions(n, fp) {
     const portrait = window.innerWidth / window.innerHeight < 1;
     const rx = portrait ? 40 : 45, ry = portrait ? 41 : 37;
-    return Array.from({ length: n }, (_, i) => {
-      if (fp && i === 0) return { x: 50, y: 92, bx: 50, by: 70 };
-      const deg = fp ? 145 + (i * 250) / n : 90 + (i * 360) / n;
-      const ang = (deg * Math.PI) / 180;
-      return {
-        x: 50 + rx * Math.cos(ang), y: 53 + ry * Math.sin(ang),
-        bx: 50 + rx * 0.58 * Math.cos(ang), by: 55 + ry * 0.55 * Math.sin(ang),
-      };
-    });
+    const box = $('table').getBoundingClientRect();
+    const W = box.width || window.innerWidth, H = box.height || window.innerHeight / 2;
+    const sample = document.querySelector('#seats .seat:not(.fp-me)');
+    const sw = (sample && sample.offsetWidth) || Math.min(140, Math.max(78, window.innerWidth * (portrait ? 0.22 : 0.13)));
+    const sh = (sample && sample.offsetHeight) || sw * 0.75;
+    const at = (deg) => {
+      const a = (deg * Math.PI) / 180;
+      const x = 50 + rx * Math.cos(a), y = 53 + ry * Math.sin(a);
+      return { x, y, bx: 50 + (x - 50) * 0.58, by: 55 + (y - 53) * 0.55 };
+    };
+    const out = [];
+    let others = n, from = 90, span = 360;
+    if (fp) { out.push({ x: 50, y: 92, bx: 50, by: 70 }); others = n - 1; from = 140; span = 260; }
+    const N = 720, len = [0];
+    let prev = at(from);
+    for (let k = 1; k <= N; k++) {
+      const p = at(from + (span * k) / N);
+      len.push(len[k - 1] + Math.hypot(((p.x - prev.x) * W) / 100 / sw, ((p.y - prev.y) * H) / 100 / sh));
+      prev = p;
+    }
+    let k = 0;
+    for (let i = 0; i < others; i++) {
+      const target = (len[N] * (fp ? i + 0.5 : i)) / others;
+      while (k < N && len[k + 1] < target) k++;
+      out.push(at(from + (span * k) / N));
+    }
+    return out;
   }
 
   // solo se anima el reparto de cartas que no estaban antes en pantalla
@@ -689,6 +783,13 @@
     nowSeen = new Set();
     $('roomCode').textContent = s.code;
     $('hostBtn').classList.toggle('hidden', !s.isHost);
+    const T = s.tour;
+    $('tourBtn').classList.toggle('hidden', !T);
+    if (T) {
+      $('tourBtn').textContent = !T.started ? `🏆 Torneo de ${T.size}`
+        : T.finished ? '🏆 Terminado'
+        : `🏆 ${T.left}/${T.size} · ${fmt(T.smallBlind)}/${fmt(T.bigBlind)}`;
+    }
 
     // cartas ganadoras (para resaltarlas)
     const winning = new Set();
@@ -718,13 +819,13 @@
 
     // asientos (yo siempre abajo)
     const seatsEl = $('seats');
-    seatsEl.innerHTML = '';
     const players = s.seats.filter(Boolean);
     const mySeat = s.yourSeat >= 0 ? s.yourSeat : 0;
     players.sort((a, b) => ((a.seat - mySeat + 9) % 9) - ((b.seat - mySeat + 9) % 9));
     const fp = view === 'fp' && s.yourSeat >= 0;
     $('table').classList.toggle('fp', fp);
     const pos = seatPositions(players.length, fp);
+    seatsEl.innerHTML = '';
     render.posBySeat = {};
     players.forEach((p, i) => { render.posBySeat[p.seat] = pos[i]; });
 
@@ -816,7 +917,23 @@
     // barra inferior cuando no es mi turno
     const wait = $('waitBar');
     wait.innerHTML = '';
-    if (!a) {
+    if (!a && T && T.started && (T.finished || T.myPlace)) {
+      const msg = T.finished
+        ? `🏆 ¡${T.winner} ganó el torneo!${T.myPlace ? ` Tú quedaste ${T.myPlace}º de ${T.size}.` : ''}`
+        : `Quedaste eliminado en el puesto ${T.myPlace}º de ${T.size}. Puedes seguir mirando el torneo.`;
+      const btn = h('button', { className: 'btn small', textContent: '📋 Posiciones' });
+      btn.onclick = () => openModal(buildTourPanel);
+      wait.append(h('span', { textContent: msg }), btn);
+      // al terminar (o al quedar afuera) se muestran las posiciones una vez
+      const key = `${s.code}-${T.finished ? 'fin' : 'out'}`;
+      if (render.tourShown !== key) { render.tourShown = key; if (T.finished) openModal(buildTourPanel); }
+    } else if (!a && T && !T.started && !s.running) {
+      if (s.isHost) {
+        const btn = h('button', { className: 'btn gold', textContent: `🏆 Empezar el torneo (${T.size} jugadores)` });
+        btn.onclick = () => send('start');
+        wait.append(btn, h('span', { textContent: 'Comparte el código: los lugares que falten se completan con bots.' }));
+      } else wait.append(`Torneo de ${T.size} jugadores: esperando a que el anfitrión lo empiece…`);
+    } else if (!a) {
       if (!s.running && s.isHost) {
         const n = players.filter((p) => p.chips > 0).length;
         const btn = h('button', { className: 'btn gold', textContent: n < 2 ? 'Esperando jugadores…' : '▶ Empezar a jugar', disabled: n < 2 });

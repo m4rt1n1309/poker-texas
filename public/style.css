@@ -385,3 +385,14 @@ table.ranking td.neg { color: #ff8a8a; font-weight: 700; }
   filter: drop-shadow(0 4px 8px rgba(0,0,0,.35));
 }
 .view-pick .vp-ico { font-size: 34px; margin-bottom: 4px; }
+
+/* ---------- torneo ---------- */
+.room-info { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.tour-chip { white-space: nowrap; background: rgba(232,185,49,.15); border-color: var(--gold); color: #ffe8a3; }
+.tour-head { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 8px 0 12px; }
+.tour-head div { background: rgba(0,0,0,.25); border-radius: 10px; padding: 8px; text-align: center; }
+.tour-head b { display: block; color: var(--gold); font-size: 18px; }
+.tour-head small { color: var(--muted); }
+table.ranking tr.out td { color: var(--muted); }
+.tour-end { font-size: 18px; text-align: center; }
+.lobby-card .sys, .modal .sys { color: var(--muted); font-size: 13px; }
